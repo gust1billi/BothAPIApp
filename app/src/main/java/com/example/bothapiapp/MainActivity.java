@@ -2,6 +2,7 @@ package com.example.bothapiapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,6 +11,8 @@ import android.widget.Button;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -64,13 +67,35 @@ public class MainActivity extends AppCompatActivity {
         });
 
         loginButton.setOnClickListener(view -> {
-            if ( emailEdit.length() != 0 && passEdit.length() != 0 ){
-                Log.e("PATH", "EMAIL & PASSWORD IS NOT EMPTY");
+            String email = Objects.requireNonNull( emailEdit.getText( ) ).toString();
+            String pass  = Objects.requireNonNull( passEdit.getText( ) ).toString();
 
-            } else {
-                Utils.showToast(MainActivity.this, "Please input email & password");
-            }
+            if ( emailEdit.length() == 0 || passEdit.length() == 0 ){
+                Utils.showToast(MainActivity.this, "EMAIL OR  PASSWORD IS EMPTY");
+
+            } else if ( emailLayout.isErrorEnabled( ) || passLayout.isErrorEnabled( ) ){
+                Utils.showToast(MainActivity.this, "Please input email & password correctly");
+            } else checkLogin( email, passEdit.getText( ).toString() );
         });
+    }
+
+    private void checkLogin(String email, String password) {
+        Log.e("Values", email + " & " + password);
+
+        try {
+            String code = APIHandler.login(
+                    MainActivity.this, email, password);
+            // Log.e("Access Code", code);
+            // nextActivity(code);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void nextActivity(String code) {
+        Intent i = new Intent();
+        i.putExtra("code", code);
+        startActivity(i);
     }
 
     private void testGradle() {
