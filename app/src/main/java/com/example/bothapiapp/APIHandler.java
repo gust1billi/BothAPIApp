@@ -19,44 +19,47 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class APIHandler {
-    static String code = "";
+    private static String code;
 
-    public static String login(Context ctx, String email, String password) {
+    public static String doLogin(Context ctx, String email, String password) {
         String url = "https://tmiapi-dev.mitraindogrosir.co.id/api/login_member_api";
-        Log.e("Here", "Hit");
+        Log.e("Location", "hit");
 
-        RequestQueue queue = Volley.newRequestQueue(ctx);
+        RequestQueue queue = Volley.newRequestQueue( ctx );
 
         StringRequest request = new StringRequest( Request.Method.POST, url,
-            new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    try {
-                        // Assign Code --> code = "bruh";
-                        JSONObject loginObject = new JSONObject(response);
-                        JSONObject responseObject = loginObject.getJSONObject("user_data");
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                            // Assign Code --> code = "bruh";
+                            JSONObject loginObject = new JSONObject(response);
+                            String loginResult = loginObject.getString("message");
 
-                        code = loginObject.getString("access_token");
+                            Utils.showToast( ctx, loginResult );
 
-                        Log.e("Access", responseObject.getString("message"));
-                        Log.e("Code", code);
+                            Log.e("Access", loginResult) ;
+                            // Log.e("Code", code);
+                            if ( loginResult.equals( "Berhasil masuk" ) ){
+                                JSONObject responseObject = loginObject.getJSONObject("user_data");
+                                String access_token = responseObject.getString("access_token");
 
-//                        Log.e(AccessCodeTalker.TAG(),
-//                                response.getJSONObject("user_data")
-//                                        .getString("access_token") );
-                    } catch (Exception e){
-                        e.printStackTrace();
+//                                Log.e("access code", access_token);
+                                code = access_token;
+                            }
+
+                        } catch (Exception e){
+                            Log.e("JSON OBJ VOLLEY ERROR", e.toString() );
+                        }
                     }
-                }
-            },
-            new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Utils.showToast(ctx, "Login Failed: " + error);
-                    Log.e("Error POST VOLLEY", error.toString() );
-                }
-        }) {
-            @Nullable
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Utils.showToast(ctx, "Login Failed: " + error);
+                        Log.e("Error POST VOLLEY", error.toString() );
+                    }
+                }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
 
@@ -70,7 +73,6 @@ public class APIHandler {
         };
 
         queue.add(request);
-
         return code;
     }
 }
