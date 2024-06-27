@@ -8,4 +8,8 @@
         android:title="@string/recycler_view_search"
         android:icon="@drawable/ic_baseline_search_24"
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
+
+    <item
+        android:id="@+id/log_out"
+        android:title="@string/LogOut"/>
 </menu>

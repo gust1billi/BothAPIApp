@@ -6,11 +6,14 @@ import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -30,11 +33,17 @@ import java.util.Map;
 
 public class ProductsViewActivity extends AppCompatActivity {
 
-    RecyclerView rv; List<Product> cart;
+    RecyclerView rv;
     ProductAdapter adapter; LinearLayoutManager layoutManager;
 
+    List<Product> cart = new ArrayList<>();
+
+    TextView waiting;
     SearchView rvSearchView;
 
+    String LOGIN_INSTANCE = "Preference Login";
+
+    String LOGIN_PREFERENCE = "LOGIN PREFERENCES";
     String code;
 
     @Override
@@ -64,9 +73,7 @@ public class ProductsViewActivity extends AppCompatActivity {
                     return false;
                 }
             }
-        });
-
-        return super.onCreateOptionsMenu(menu);
+        }); return super.onCreateOptionsMenu(menu);
     }
 
     // Set data after filtered
@@ -87,6 +94,15 @@ public class ProductsViewActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if ( item.getTitle( ).equals( getString( R.string.LogOut ) ) ) {
+            SharedPreferences preferences = getSharedPreferences(LOGIN_PREFERENCE, MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+
+            editor.putBoolean(LOGIN_INSTANCE, false);
+            editor.apply();
+            finish();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -95,17 +111,21 @@ public class ProductsViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recycler_view);
 
+        waiting = findViewById( R.id.waits );
+
         rv = findViewById(R.id.product_recycler_view);
         layoutManager = new LinearLayoutManager(ProductsViewActivity.this );
         rv.setLayoutManager(layoutManager);
 
-        cart = new ArrayList<>();
+        if ( !cart.isEmpty( ) ) {
+            // butuh sqlite
+            adapter = new ProductAdapter(ProductsViewActivity.this, cart);
+        } else {
+            Bundle extras = getIntent().getExtras();
+            code = extras.getString("code");
 
-        Bundle extras = getIntent().getExtras();
-
-        code = extras.getString("code");
-
-        productAPIRequest(code);
+            productAPIRequest(code);
+        }
     }
 
     private void productAPIRequest( String code ) {
@@ -141,6 +161,7 @@ public class ProductsViewActivity extends AppCompatActivity {
                         }
 
                         adapter = new ProductAdapter(ProductsViewActivity.this, cart);
+                        waiting.setVisibility(View.INVISIBLE);
                         rv.setAdapter(adapter);
                     } catch (Exception e){
                         e.printStackTrace();

@@ -20,4 +20,8 @@
     <string name="harga_produk">Harga Produk</string>
     <string name="product_price">Angka Harga Produk</string>
     <string name="recycler_view_search">Recycler View Search</string>
+    <string name="write_preference">Write Preference</string>
+    <string name="read_preferences">Read Preferences</string>
+    <string name="LogOut">Log Out</string>
+    <string name="please_wait">Tunggu Sebentar selagi data ditampilkan</string>
 </resources>

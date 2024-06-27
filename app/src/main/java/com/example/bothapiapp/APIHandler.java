@@ -1,6 +1,9 @@
 package com.example.bothapiapp;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -21,7 +24,12 @@ import java.util.Map;
 public class APIHandler {
     private static String code;
 
-    public static String doLogin(Context ctx, String email, String password) {
+    static String LOGIN_INSTANCE = "Preference Login";
+    static String PREF_TOKEN = "Preference Token";
+
+    static String LOGIN_PREFERENCE = "LOGIN PREFERENCES";
+
+    public static void doLogin(Context ctx, String email, String password) {
         String url = "https://tmiapi-dev.mitraindogrosir.co.id/api/login_member_api";
         Log.e("Location", "hit");
 
@@ -44,8 +52,18 @@ public class APIHandler {
                                 JSONObject responseObject = loginObject.getJSONObject("user_data");
                                 String access_token = responseObject.getString("access_token");
 
-//                                Log.e("access code", access_token);
-                                code = access_token;
+                                Log.e("access code", access_token);
+
+                                SharedPreferences preferences =
+                                        ctx.getSharedPreferences(LOGIN_PREFERENCE, MODE_PRIVATE );
+                                SharedPreferences.Editor editor = preferences.edit();
+
+                                editor.putBoolean(LOGIN_INSTANCE, true);
+                                editor.putString(PREF_TOKEN, access_token);
+
+                                editor.apply();
+
+                                ((MainActivity)ctx).nextActivity(access_token);
                             }
 
                         } catch (Exception e){
@@ -73,6 +91,5 @@ public class APIHandler {
         };
 
         queue.add(request);
-        return code;
     }
 }

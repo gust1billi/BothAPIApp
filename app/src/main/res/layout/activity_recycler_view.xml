@@ -6,6 +6,18 @@
     android:layout_height="match_parent"
     tools:context=".ProductsViewActivity">
 
+    <TextView
+        android:id="@+id/waits"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/please_wait"
+        android:layout_marginTop="250dp"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/product_recycler_view"
         android:layout_width="match_parent"

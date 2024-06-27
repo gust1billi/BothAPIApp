@@ -7,8 +7,10 @@
         <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout-w936dp/activity_login.xml" value="0.20625" />
         <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/activity_login.xml" value="0.275" />
         <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/activity_main.xml" value="0.275" />
+        <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/activity_preferences_test.xml" value="0.13125" />
         <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/activity_recycler_view.xml" value="0.2609375" />
-        <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/product_recycler_view.xml" value="0.14479166666666668" />
+        <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/layout/product_recycler_view.xml" value="0.264" />
+        <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/menu/login_menu.xml" value="0.27395833333333336" />
         <entry key="..\:/IDM/AndroidStudioProjects/BothAPIApp/app/src/main/res/menu/rv_menu.xml" value="0.4" />
       </map>
     </option>
