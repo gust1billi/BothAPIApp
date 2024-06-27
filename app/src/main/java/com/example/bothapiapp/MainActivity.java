@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     TextInputLayout emailLayout, passLayout;
     TextInputEditText emailEdit, passEdit;
 
+    TextView loginHeader;
+
     Button loginButton;
 
     String code;
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         passEdit    = findViewById(R.id.passwordInputEdit);
         passLayout  = findViewById(R.id.passwordInputLayout);
         loginButton = findViewById(R.id.loginButton);
+        loginHeader = findViewById(R.id.login_header2);
 
         emailEdit.addTextChangedListener(new TextWatcher() {
             @Override
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 Utils.showToast(MainActivity.this, "Please input email & password correctly");
             } else {
                 checkLogin( email, pass );
+
             }
         });
     }
@@ -120,7 +125,11 @@ public class MainActivity extends AppCompatActivity {
 
                                 Log.e("access code", access_token);
 
-                                code = access_token;
+                                setCode(access_token);
+
+//                                loginHeader.setText(access_token);
+
+                                nextActivity(access_token);
                             }
 
                         } catch (Exception e){
@@ -153,19 +162,17 @@ public class MainActivity extends AppCompatActivity {
     private void checkLogin(String email, String password) {
         Log.e("Values", email + " & " + password);
 
-        try {
-            doLogin(MainActivity.this, email, password);
-             Log.e("Access Code", code);
-             nextActivity();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        doLogin(MainActivity.this, email, password);
     }
 
-    private void nextActivity() {
-        Intent i = new Intent();
-        i.putExtra("code", code);
+    private void nextActivity(String token) {
+        Intent i = new Intent(MainActivity.this, ProductsViewActivity.class );
+        i.putExtra("code", token);
         startActivity(i);
+    }
+
+    private void setCode(String access_code){
+        code = access_code; Log.e("value", code);
     }
 
     private void testGradle() {

@@ -1,11 +1,16 @@
 package com.example.bothapiapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -20,6 +25,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ProductsViewActivity extends AppCompatActivity {
@@ -27,7 +33,62 @@ public class ProductsViewActivity extends AppCompatActivity {
     RecyclerView rv; List<Product> cart;
     ProductAdapter adapter; LinearLayoutManager layoutManager;
 
+    SearchView rvSearchView;
+
     String code;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.rv_menu, menu);
+
+        rvSearchView = (SearchView) menu.findItem(R.id.rv_search_bar).getActionView();
+        rvSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false; // IGNORE
+            }
+
+            @Override
+            public boolean onQueryTextChange( String filter ) {
+                // IF RV data is not empty
+                if ( !cart.isEmpty() ){
+                    // IF text input
+                    if (filter.length() != 0 ){
+                        filterData( filter );
+                    } else originalData();
+                    return true;
+                } else {
+                    Utils.showToast(ProductsViewActivity.this,
+                            "Please wait until data loads");
+                    return false;
+                }
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    // Set data after filtered
+    private void filterData(String filter) {
+        List<Product> filteredList = new ArrayList<>();
+        for ( Product filteredProductPosition : cart ) {
+            if ( filteredProductPosition.getProduct_name( )
+                    .toLowerCase( ).contains( filter.toLowerCase( Locale.ROOT ) ) ) {
+                filteredList.add( filteredProductPosition );
+            }
+        } adapter.setDataShown( filteredList );
+    }
+
+    // return original data when Search is empty
+    private void originalData() {
+        adapter.setDataShown(cart);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +97,8 @@ public class ProductsViewActivity extends AppCompatActivity {
 
         rv = findViewById(R.id.product_recycler_view);
         layoutManager = new LinearLayoutManager(ProductsViewActivity.this );
+        rv.setLayoutManager(layoutManager);
+
         cart = new ArrayList<>();
 
         Bundle extras = getIntent().getExtras();
@@ -76,6 +139,9 @@ public class ProductsViewActivity extends AppCompatActivity {
                                 e.printStackTrace();
                             }
                         }
+
+                        adapter = new ProductAdapter(ProductsViewActivity.this, cart);
+                        rv.setAdapter(adapter);
                     } catch (Exception e){
                         e.printStackTrace();
                     }
@@ -90,7 +156,6 @@ public class ProductsViewActivity extends AppCompatActivity {
             }
         };
 
-        rv.setAdapter(adapter); rv.setLayoutManager(layoutManager);
         queue.add(request);
     }
 }

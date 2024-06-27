@@ -19,4 +19,5 @@
     <string name="product_code">Kode Produk</string>
     <string name="harga_produk">Harga Produk</string>
     <string name="product_price">Angka Harga Produk</string>
+    <string name="recycler_view_search">Recycler View Search</string>
 </resources>
