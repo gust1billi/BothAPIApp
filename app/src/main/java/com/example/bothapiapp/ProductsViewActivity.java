@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -40,6 +41,8 @@ public class ProductsViewActivity extends AppCompatActivity {
 
     TextView waiting;
     SearchView rvSearchView;
+
+    ProgressBar loadingAnimation;
 
     String LOGIN_INSTANCE = "Preference Login";
 
@@ -111,6 +114,9 @@ public class ProductsViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recycler_view);
 
+        loadingAnimation = findViewById(R.id.loadingAnimation);
+        loadingAnimation.setVisibility(View.INVISIBLE);
+
         waiting = findViewById( R.id.waits );
 
         rv = findViewById(R.id.product_recycler_view);
@@ -131,6 +137,8 @@ public class ProductsViewActivity extends AppCompatActivity {
     private void productAPIRequest( String code ) {
         String url = "https://tmiapi-dev.mitraindogrosir.co.id/api/get_data_member";
         RequestQueue queue = Volley.newRequestQueue(ProductsViewActivity.this);
+
+        loadingAnimation.setVisibility(View.VISIBLE);
 
         StringRequest request = new StringRequest(Request.Method.POST, url,
                 response -> {
@@ -162,6 +170,7 @@ public class ProductsViewActivity extends AppCompatActivity {
 
                         adapter = new ProductAdapter(ProductsViewActivity.this, cart);
                         waiting.setVisibility(View.INVISIBLE);
+                        loadingAnimation.setVisibility(View.INVISIBLE);
                         rv.setAdapter(adapter);
                     } catch (Exception e){
                         e.printStackTrace();
