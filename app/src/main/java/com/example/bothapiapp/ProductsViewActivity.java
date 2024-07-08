@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -20,13 +21,17 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.bothapiapp.databasehandler.DBHandler;
 import com.example.bothapiapp.recyclerview.Product;
 import com.example.bothapiapp.recyclerview.ProductAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,6 +43,8 @@ public class ProductsViewActivity extends AppCompatActivity {
     ProductAdapter adapter; LinearLayoutManager layoutManager;
 
     List<Product> cart = new ArrayList<>();
+
+    DBHandler dbHandler;
 
     TextView waiting;
     SearchView rvSearchView;
@@ -117,16 +124,34 @@ public class ProductsViewActivity extends AppCompatActivity {
         loadingAnimation = findViewById(R.id.loadingAnimation);
         loadingAnimation.setVisibility(View.INVISIBLE);
 
+        dbHandler = new DBHandler(ProductsViewActivity.this );
+
         waiting = findViewById( R.id.waits );
 
-        rv = findViewById(R.id.product_recycler_view);
+        rv = findViewById( R.id.product_recycler_view );
         layoutManager = new LinearLayoutManager(ProductsViewActivity.this );
-        rv.setLayoutManager(layoutManager);
+        rv.setLayoutManager( layoutManager );
+
+        // CHECK SQLITE IF IT HAS VALUE ALREADY. IF NOT, CALL API
+        checkSQLite();
+
+    }
+
+    private void checkSQLite() {
+        Cursor cursor = dbHandler.readAllProducts();
+        cart.clear();
+
+        if ( cursor.moveToFirst() && cursor.getCount() < 0 ){
+            // SQLITE IS NOT NULL
+        } else {
+            // INSERT ELSE YG DI BAWAH
+        }
 
         if ( !cart.isEmpty( ) ) {
-            // butuh sqlite
+            // KALAU SQLITE SDH ADA ISI NYA
             adapter = new ProductAdapter(ProductsViewActivity.this, cart);
         } else {
+            // KALAU SQLITE MASIH KOSONG
             Bundle extras = getIntent().getExtras();
             code = extras.getString("code");
 
@@ -153,10 +178,32 @@ public class ProductsViewActivity extends AppCompatActivity {
                         Log.e("Size", "products size is " + memberData.length() );
 
                         JSONObject apple;
+                        JSONArray barcode;
+
+                        Date currentTime = Calendar.getInstance().getTime();
 
                         for (int i = 0; i < memberData.length(); i++) {
                             try {
                                 apple = memberData.getJSONObject(i);
+                                barcode = apple.getJSONArray("barcode");
+
+                                dbHandler.addProduct(
+                                        apple.getInt("product_id"),
+                                        apple.getString("product_name"),
+                                        apple.getString("product_code"),
+                                        apple.getString("price")
+                                );
+
+                                // Re-roll foreach barcode yang ada
+                                for (int j = 0; j < barcode.length(); j++) {
+                                    dbHandler.addBarcode(
+                                            apple.getInt("product_id"),
+                                            apple.getString("product_code"),
+                                            barcode.getString(j),
+                                            currentTime,
+                                            currentTime
+                                    );
+                                }
 
                                 cart.add( new Product(
                                         apple.getString("product_name"),

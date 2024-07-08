@@ -3,7 +3,6 @@ package com.example.bothapiapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -16,20 +15,9 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -92,12 +80,9 @@ public class MainActivity extends AppCompatActivity {
         // For some reason, it doesn't work without this variable
         boolean autoLogin = preferences.getBoolean( LOGIN_INSTANCE, false );
 
-        if ( autoLogin ){
+        if ( autoLogin ) {
             nextActivity( preferences.getString( PREF_TOKEN, "" ) );
         }
-
-//        SharedPreferences preferences = getSharedPreferences(LOGIN_PREFERENCE, MODE_PRIVATE);
-//        Utils.showToast(MainActivity.this, "Amount: " + preferences.getInt(PREF_INTEGER, 0));
 
         emailEdit   = findViewById(R.id.emailInputEdit);
         emailLayout = findViewById(R.id.emailInputLayout);
@@ -152,70 +137,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-    }
-
-    public void doLogin(Context ctx, String email, String password) {
-        String url = "https://tmiapi-dev.mitraindogrosir.co.id/api/login_member_api";
-        Log.e("Location", "hit");
-
-        RequestQueue queue = Volley.newRequestQueue( ctx );
-
-        StringRequest request = new StringRequest( Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            // Assign Code --> code = "bruh";
-                            JSONObject loginObject = new JSONObject(response);
-                            String loginResult = loginObject.getString("message");
-
-                            Utils.showToast( ctx, loginResult );
-
-                            Log.e("Access", loginResult) ;
-                            // Log.e("Code", code);
-                            if ( loginResult.equals( "Berhasil masuk" ) ){
-                                JSONObject responseObject = loginObject.getJSONObject("user_data");
-                                String access_token = responseObject.getString("access_token");
-
-                                Log.e("access code", access_token);
-
-                                SharedPreferences preferences =
-                                        getSharedPreferences(LOGIN_PREFERENCE, MODE_PRIVATE );
-                                SharedPreferences.Editor editor = preferences.edit();
-
-                                editor.putBoolean(LOGIN_INSTANCE, true);
-                                editor.putString(PREF_TOKEN, access_token);
-
-                                editor.apply();
-
-                                nextActivity(access_token);
-                            }
-
-                        } catch (Exception e){
-                            Log.e("JSON OBJ VOLLEY ERROR", e.toString() );
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Utils.showToast(ctx, "Login Failed: " + error);
-                        Log.e("Error POST VOLLEY", error.toString() );
-                    }
-                }) {
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-
-                Map<String, String> params = new HashMap<>();
-
-                params.put("email", email);
-                params.put("password", password);
-
-                return params;
-            }
-        };
-
-        queue.add(request);
     }
 
     private void checkLogin(String email, String password) {
