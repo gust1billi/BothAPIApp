@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.RetryPolicy;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.bothapiapp.databasehandler.DBHandler;
@@ -26,16 +29,18 @@ import com.example.bothapiapp.recyclerview.Product;
 import com.example.bothapiapp.recyclerview.ProductAdapter;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ProductsViewActivity extends AppCompatActivity {
 
@@ -54,7 +59,6 @@ public class ProductsViewActivity extends AppCompatActivity {
     String LOGIN_INSTANCE = "Preference Login";
 
     String LOGIN_PREFERENCE = "LOGIN PREFERENCES";
-    String code;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -111,6 +115,19 @@ public class ProductsViewActivity extends AppCompatActivity {
             editor.putBoolean(LOGIN_INSTANCE, false);
             editor.apply();
             finish();
+        } else if ( item.getTitle().equals( getString( R.string.size_of_db ) ) ){
+            Cursor cursor = dbHandler.readAllProducts();
+            Cursor bCursor = dbHandler.readAllBarcodes();
+            cursor.moveToFirst();
+
+            Log.e("Count Product", "" + cursor.getCount( ) );
+            Log.e("Count Barcode", "" + bCursor.getCount( ) );
+            Log.e("Count RV", "" + cart.size() );
+
+//            while ( bCursor.moveToNext( ) ) {
+//                Log.e( "ITEM", bCursor.getString(3) );
+//                Log.e( "ITEM DATE", bCursor.getString(4) );
+//            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -134,32 +151,56 @@ public class ProductsViewActivity extends AppCompatActivity {
 
         // CHECK SQLITE IF IT HAS VALUE ALREADY. IF NOT, CALL API
         checkSQLite();
-
     }
 
+    // Check if DB already has data. Take from API if not
     private void checkSQLite() {
-        Cursor cursor = dbHandler.readAllProducts();
+        Cursor cursor = dbHandler.readAllProducts( );
+//        Cursor barcodeCursor = dbHandler.readAllBarcodes( );
         cart.clear();
 
-        if ( cursor.moveToFirst() && cursor.getCount() < 0 ){
+        dbHandler.onUpgrade( dbHandler.getReadableDatabase(), 0, 0 );
+
+        Log.e("DB Products", "" + cursor.getCount( ) );
+//        Log.e("DB Barcodes", "" + barcodeCursor.getCount( ) );
+
+        // Dengan asumsi data tidak perlu di update setelah di simpan
+        // Error statement dari stack overflow. Cursor.getCount > 0 aja nanti
+        if ( cursor.getCount() > 0 ){
             // SQLITE IS NOT NULL
-        } else {
-            // INSERT ELSE YG DI BAWAH
-        }
+            Log.e("path", "yeet");
+            loadingAnimation.setVisibility(View.VISIBLE);
 
-        if ( !cart.isEmpty( ) ) {
-            // KALAU SQLITE SDH ADA ISI NYA
-            adapter = new ProductAdapter(ProductsViewActivity.this, cart);
+            while ( cursor.moveToNext() ){
+                cart.add( new Product(
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3)
+                ) );
+            }
+            adapter = new ProductAdapter(ProductsViewActivity.this, cart );
+            waiting.setVisibility(View.INVISIBLE);
+            loadingAnimation.setVisibility(View.INVISIBLE);
+            rv.setAdapter(adapter);
         } else {
-            // KALAU SQLITE MASIH KOSONG
             Bundle extras = getIntent().getExtras();
-            code = extras.getString("code");
+            String code = extras.getString("code");
 
-            productAPIRequest(code);
+            productAPIRequest( code ); // To give data to the Adapter
+
+//            dbAssignAPIRequest( code ); // 3rd try: Assign to DB, only runs for loop twice
+
+//            ExecutorService executorService = Executors.newFixedThreadPool(256); // 1st Try
+//            executorService.execute(new Runnable() {
+//                @Override
+//                public void run() {
+//                    dbAssignAPIRequest( code );
+//                }
+//            });
         }
     }
 
-    private void productAPIRequest( String code ) {
+    private void productAPIRequest( String token ) {
         String url = "https://tmiapi-dev.mitraindogrosir.co.id/api/get_data_member";
         RequestQueue queue = Volley.newRequestQueue(ProductsViewActivity.this);
 
@@ -169,48 +210,77 @@ public class ProductsViewActivity extends AppCompatActivity {
                 response -> {
                     try {
                         JSONObject memberList = new JSONObject(response);
-                        JSONArray memberData  = memberList
+                        JSONArray memberData = memberList
                                 .getJSONObject("message")
                                 .getJSONArray("data_product");
 
                         Log.e("Status Value", memberList.getString("status"));
                         // Proves that the API Responded
-                        Log.e("Size", "products size is " + memberData.length() );
+                        Log.e("Size", "products size is " + memberData.length());
 
-                        JSONObject apple;
-                        JSONArray barcode;
+                        String date = getDate();
 
-                        Date currentTime = Calendar.getInstance().getTime();
+                        // 4th Try: Gets 475 iterations
+                        // 8th Try:
+                        ExecutorService service = Executors.newFixedThreadPool(256);
+                        // 7th Try: AsyncTask, only makes the whole loop called once
+//                        AsyncTask<String, Void, Void> asyncTask = new assignDBAsyncTask();
 
                         for (int i = 0; i < memberData.length(); i++) {
                             try {
-                                apple = memberData.getJSONObject(i);
-                                barcode = apple.getJSONArray("barcode");
+                                JSONObject apple = memberData.getJSONObject(i);
+                                 JSONArray barcode = apple.getJSONArray("barcode");
 
-                                dbHandler.addProduct(
-                                        apple.getInt("product_id"),
+                                // RTO Trial; kenapa skrng stuck di 475 jg?
+//                                dbHandler.addProduct(
+//                                        apple.getInt("product_id"),
+//                                        apple.getString("product_name"),
+//                                        apple.getString("product_code"),
+//                                        apple.getString("price")
+//                                );
+
+//                                asyncTask.execute(
+//                                        String.valueOf(apple.getInt("product_id")),
+//                                        apple.getString("product_name"),
+//                                        apple.getString("product_code"),
+//                                        apple.getString("price")
+//                                );
+
+                                service.execute( () -> {
+                                    try {
+                                        dbHandler.addProduct(
+                                                apple.getString("product_name"),
+                                                apple.getString("product_code"),
+                                                apple.getString("price")
+                                        );
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                });
+
+                                cart.add(new Product(
                                         apple.getString("product_name"),
                                         apple.getString("product_code"),
                                         apple.getString("price")
-                                );
+                                ));
 
-                                // Re-roll foreach barcode yang ada
-                                for (int j = 0; j < barcode.length(); j++) {
-                                    dbHandler.addBarcode(
-                                            apple.getInt("product_id"),
-                                            apple.getString("product_code"),
-                                            barcode.getString(j),
-                                            currentTime,
-                                            currentTime
-                                    );
-                                }
+//                                // RTO Test. 6th Try
+                                service.execute( ( ) -> {
+                                    for (int j = 0 ; j < barcode.length() ; j++) {
+                                        try {
+                                            dbHandler.addBarcode(
+                                                    apple.getString("product_code"),
+                                                    barcode.getString(j),
+                                                    date,
+                                                    date
+                                            );
+                                        } catch ( Exception e ) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                });
 
-                                cart.add( new Product(
-                                        apple.getString("product_name"),
-                                        apple.getString("product_code"),
-                                        apple.getString("price")
-                                ) );
-                            } catch (Exception e){
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
@@ -219,20 +289,70 @@ public class ProductsViewActivity extends AppCompatActivity {
                         waiting.setVisibility(View.INVISIBLE);
                         loadingAnimation.setVisibility(View.INVISIBLE);
                         rv.setAdapter(adapter);
-                    } catch (Exception e){
+
+//                        Product post; // 5th Try: Kenapa hanya bisa bikin 475 dari 789???
+//                        for (int i = 0; i < cart.size() ; i++) {
+//                            post = cart.get(i);
+//                            dbHandler.addProduct(
+//                                    post.getProduct_id(),
+//                                    post.getProduct_name(),
+//                                    post.getProduct_code(),
+//                                    post.getPrice()
+//                            );
+//                        }
+
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }, error -> {
-                Utils.showToast(ProductsViewActivity.this, "Login Failed: " + error);
-                Log.e("Error POST VOLLEY", error.toString() );
-            }) {
+                    Utils.showToast(ProductsViewActivity.this, "API Failed: " + error);
+                    Log.e("Error POST VOLLEY", error.toString());
+                }) {
+                @Override
+                public Map<String, String> getHeaders( ) {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer " + token); return headers;
+                }
+            };
+
+        // EXTENDS TIMEOUT TIMER. TO AVOID RTO ERROR
+        request.setRetryPolicy(new RetryPolicy() {
             @Override
-            public Map<String, String> getHeaders( ) {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + code); return headers;
+            public int getCurrentTimeout() {
+                return 50000; // time in milliseconds
             }
-        };
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 50000; // time in milliseconds
+            }
+
+            @Override
+            public void retry(VolleyError error) { /* IGNORE */ }
+        });
 
         queue.add(request);
+    }
+
+    // 2nd Try, do a new API call. Technically works; F
+
+    private String getDate() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(
+                "dd-MM-yyyy", Locale.getDefault());
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
+
+    private class assignDBAsyncTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... items) {
+            DBHandler dbHandler = new DBHandler(ProductsViewActivity.this);
+            dbHandler.addProduct(
+                    items[1],
+                    items[2],
+                    items[3]);
+            return null;
+        }
     }
 }

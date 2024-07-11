@@ -10,6 +10,10 @@
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
 
     <item
+        android:id="@+id/dbSize"
+        android:title="@string/size_of_db" />
+
+    <item
         android:id="@+id/log_out"
         android:title="@string/LogOut"/>
 </menu>

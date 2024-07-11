@@ -1,11 +1,12 @@
 package com.example.bothapiapp.recyclerview;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 
 public class Barcode {
     int barcode_id;
+
     String product_code, barcode;
-    Timestamp create_at, update_at;
+    Date create_at, update_at;
 
     public int getBarcode_id() {
         return barcode_id;
@@ -31,19 +32,19 @@ public class Barcode {
         this.barcode = barcode;
     }
 
-    public Timestamp getCreate_at() {
+    public Date getCreate_at() {
         return create_at;
     }
 
-    public void setCreate_at(Timestamp create_at) {
+    public void setCreate_at(Date create_at) {
         this.create_at = create_at;
     }
 
-    public Timestamp getUpdate_at() {
+    public Date getUpdate_at() {
         return update_at;
     }
 
-    public void setUpdate_at(Timestamp update_at) {
+    public void setUpdate_at(Date update_at) {
         this.update_at = update_at;
     }
 }

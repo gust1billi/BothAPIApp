@@ -24,4 +24,5 @@
     <string name="read_preferences">Read Preferences</string>
     <string name="LogOut">Log Out</string>
     <string name="please_wait">Tunggu Sebentar selagi data ditampilkan</string>
+    <string name="size_of_db">Size of DB</string>
 </resources>
