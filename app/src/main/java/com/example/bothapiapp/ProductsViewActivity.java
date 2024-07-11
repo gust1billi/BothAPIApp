@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -29,7 +28,6 @@ import com.example.bothapiapp.recyclerview.Product;
 import com.example.bothapiapp.recyclerview.ProductAdapter;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -124,10 +122,6 @@ public class ProductsViewActivity extends AppCompatActivity {
             Log.e("Count Barcode", "" + bCursor.getCount( ) );
             Log.e("Count RV", "" + cart.size() );
 
-//            while ( bCursor.moveToNext( ) ) {
-//                Log.e( "ITEM", bCursor.getString(3) );
-//                Log.e( "ITEM DATE", bCursor.getString(4) );
-//            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -190,7 +184,8 @@ public class ProductsViewActivity extends AppCompatActivity {
 
 //            dbAssignAPIRequest( code ); // 3rd try: Assign to DB, only runs for loop twice
 
-//            ExecutorService executorService = Executors.newFixedThreadPool(256); // 1st Try
+//            ExecutorService executorService = Executors.newFixedThreadPool(256);
+              // 1st Try & 2nd Try
 //            executorService.execute(new Runnable() {
 //                @Override
 //                public void run() {
@@ -229,7 +224,9 @@ public class ProductsViewActivity extends AppCompatActivity {
                         for (int i = 0; i < memberData.length(); i++) {
                             try {
                                 JSONObject apple = memberData.getJSONObject(i);
-                                 JSONArray barcode = apple.getJSONArray("barcode");
+                                JSONArray barcode = apple.getJSONArray("barcode");
+
+                                int position = i+1;
 
                                 // RTO Trial; kenapa skrng stuck di 475 jg?
 //                                dbHandler.addProduct(
@@ -269,6 +266,7 @@ public class ProductsViewActivity extends AppCompatActivity {
                                     for (int j = 0 ; j < barcode.length() ; j++) {
                                         try {
                                             dbHandler.addBarcode(
+                                                    position,
                                                     apple.getString("product_code"),
                                                     barcode.getString(j),
                                                     date,
@@ -343,16 +341,4 @@ public class ProductsViewActivity extends AppCompatActivity {
         return dateFormat.format(date);
     }
 
-    private class assignDBAsyncTask extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... items) {
-            DBHandler dbHandler = new DBHandler(ProductsViewActivity.this);
-            dbHandler.addProduct(
-                    items[1],
-                    items[2],
-                    items[3]);
-            return null;
-        }
-    }
 }

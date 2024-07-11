@@ -24,6 +24,7 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String PRODUCT_NAME = "product_name";
     private static final String PRODUCT_PRICE = "price";
 
+    private static final String BARCODE_ID = "barcode_id";
     private static final String BARCODE = "barcode";
     private static final String BARCODE_CREATE_AT = "create_at";
     private static final String BARCODE_UPDATE_AT = "update_at";
@@ -49,6 +50,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
         String queryTableBarcodes = "CREATE TABLE " + BARCODE_TABLE + " ("
                 + TABLE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
+                + BARCODE_ID + " INTEGER, "
                 + PRODUCT_CODE + " TEXT, "
                 + BARCODE + " TEXT, "
                 + BARCODE_CREATE_AT + " DATE DEFAULT CURRENT_DATE, "
@@ -78,11 +80,12 @@ public class DBHandler extends SQLiteOpenHelper {
         db.insert( PRODUCT_TABLE, null, values );
     }
 
-    public void addBarcode(String code, String barcode,
+    public void addBarcode(int bid, String code, String barcode,
                            String create_at, String update_at ){
         SQLiteDatabase db = DBHandler.this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
+        values.put( BARCODE_ID, bid);
         values.put( PRODUCT_CODE, code );
         values.put( BARCODE, barcode );
         values.put( BARCODE_CREATE_AT, String.valueOf( create_at ) );
