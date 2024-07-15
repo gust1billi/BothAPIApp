@@ -24,12 +24,16 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.productV
     List<Product> products;
     DBHandler dbHandler;
 
+    StringBuilder shownBarcodes = new StringBuilder();
+
+    boolean barcodeClick = false;
+
     public ProductAdapter(Context ctx, List<Product> products) {
         this.ctx = ctx;
         this.products = products;
 
         dbHandler = new DBHandler(ctx);
-    }
+    } // END OF CONSTRUCTOR
 
     @NonNull
     @Override
@@ -41,8 +45,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.productV
     }
 
     public static class productViewHolder extends RecyclerView.ViewHolder {
-        // TEXT VIEW & IMAGE VIEW
-        TextView name, code, price;
+        TextView name, code, price, barcodes;
 
         public productViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -51,6 +54,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.productV
             name = itemView.findViewById(R.id.product_name_rv);
             code = itemView.findViewById(R.id.product_code_rv);
             price = itemView.findViewById(R.id.product_price_rv);
+            barcodes = itemView.findViewById(R.id.barcodes_shown);
+
         }
     }
 
@@ -68,13 +73,52 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.productV
         holder.code.setText( product.getProduct_code( ) );
         holder.price.setText( product.getPrice( ) );
 
-        holder.itemView.setOnClickListener(view -> {
-            Log.e("path", "boop");
+        shownBarcodes = new StringBuilder("");
+        List<String> barcodeList = product.getBarcodes();
 
-            Cursor cursor = dbHandler.readProductBarcodes( holder.code.getText().toString() );
-            while ( cursor.moveToNext() ) {
-                Log.e( "Product Barcode", cursor.getString( 0 ) );
-            }
+        // PREPARES THE BARCODE FROM LIST TO SHOW
+        for (int i = 0 ; i < product.getBarcodes().size() ; i++) {
+
+            if (i != 0) shownBarcodes.append(", ");
+
+            shownBarcodes.append( barcodeList.get(i) );
+        } // Log.e("shown barcodes append", String.valueOf(shownBarcodes) );
+
+        // PRE LOADS THE BARCODES AND MAKES THEM INVISIBLE
+        holder.barcodes.setText( shownBarcodes );
+        holder.barcodes.setVisibility(View.INVISIBLE);
+
+        if ( barcodeClick ){
+            holder.barcodes.setVisibility(View.VISIBLE);
+
+            ExecutorService waitService = Executors.newSingleThreadExecutor();
+            waitService.execute( () -> {
+                try {
+                    Thread.sleep(500);
+                    barcodeClick = false;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+
+        holder.itemView.setOnClickListener(view -> {
+            barcodeClick = true;
+            notifyItemChanged( position );
+
+//            holder.barcodes.setVisibility(View.VISIBLE);
+//            Log.e("product barcode", "" + product.getBarcodes() );
+//            Cursor cursor = dbHandler.readProductBarcodes( product.getProduct_code( ) );
+
+//            shownBarcodes = new StringBuilder();
+//
+//            while ( cursor.moveToNext() ) {
+//                Log.e( "Product Barcode", cursor.getString( 0 ) );
+//                this.shownBarcodes.append( cursor.getString(0 ) ).append(" ");
+//            }
+//
+//            Log.e("Text Concat", shownBarcodes.toString() );
+
 
         });
     }

@@ -150,10 +150,10 @@ public class ProductsViewActivity extends AppCompatActivity {
     // Check if DB already has data. Take from API if not
     private void checkSQLite() {
         Cursor cursor = dbHandler.readAllProducts( );
-//        Cursor barcodeCursor = dbHandler.readAllBarcodes( );
+        Cursor barcodeCursor;
         cart.clear();
 
-        dbHandler.onUpgrade( dbHandler.getReadableDatabase(), 0, 0 );
+//        dbHandler.onUpgrade( dbHandler.getReadableDatabase(), 0, 0 );
 
         Log.e("DB Products", "" + cursor.getCount( ) );
 //        Log.e("DB Barcodes", "" + barcodeCursor.getCount( ) );
@@ -162,16 +162,25 @@ public class ProductsViewActivity extends AppCompatActivity {
         // Error statement dari stack overflow. Cursor.getCount > 0 aja nanti
         if ( cursor.getCount() > 0 ){
             // SQLITE IS NOT NULL
+            List<String> barcodeList;
             Log.e("path", "yeet");
             loadingAnimation.setVisibility(View.VISIBLE);
 
             while ( cursor.moveToNext() ){
+                barcodeList = new ArrayList<>();
+                barcodeCursor = dbHandler.readProductBarcodes( cursor.getString(2) );
+
+                while (barcodeCursor.moveToNext( ) ){
+                    barcodeList.add( barcodeCursor.getString(0 ) );
+                } // Log.e("Barcode by SELECT WHERE", barcodeList.toString( ) );
                 cart.add( new Product(
                         cursor.getString(1),
                         cursor.getString(2),
-                        cursor.getString(3)
+                        cursor.getString(3),
+                        barcodeList
                 ) );
             }
+
             adapter = new ProductAdapter(ProductsViewActivity.this, cart );
             waiting.setVisibility(View.INVISIBLE);
             loadingAnimation.setVisibility(View.INVISIBLE);
@@ -214,6 +223,7 @@ public class ProductsViewActivity extends AppCompatActivity {
                         Log.e("Size", "products size is " + memberData.length());
 
                         String date = getDate();
+                        List<String> barcodeList;
 
                         // 4th Try: Gets 475 iterations
                         // 8th Try:
@@ -228,21 +238,6 @@ public class ProductsViewActivity extends AppCompatActivity {
 
                                 int position = i+1;
 
-                                // RTO Trial; kenapa skrng stuck di 475 jg?
-//                                dbHandler.addProduct(
-//                                        apple.getInt("product_id"),
-//                                        apple.getString("product_name"),
-//                                        apple.getString("product_code"),
-//                                        apple.getString("price")
-//                                );
-
-//                                asyncTask.execute(
-//                                        String.valueOf(apple.getInt("product_id")),
-//                                        apple.getString("product_name"),
-//                                        apple.getString("product_code"),
-//                                        apple.getString("price")
-//                                );
-
                                 service.execute( () -> {
                                     try {
                                         dbHandler.addProduct(
@@ -255,28 +250,32 @@ public class ProductsViewActivity extends AppCompatActivity {
                                     }
                                 });
 
-                                cart.add(new Product(
-                                        apple.getString("product_name"),
-                                        apple.getString("product_code"),
-                                        apple.getString("price")
-                                ));
+                                barcodeList = new ArrayList<>();
 
-//                                // RTO Test. 6th Try
-                                service.execute( ( ) -> {
-                                    for (int j = 0 ; j < barcode.length() ; j++) {
+                                for (int j = 0 ; j < barcode.length() ; j++) {
+                                    barcodeList.add( barcode.getString( j ) );
+                                    int barcode_position = j;
+
+                                    service.execute( () -> {
                                         try {
                                             dbHandler.addBarcode(
                                                     position,
                                                     apple.getString("product_code"),
-                                                    barcode.getString(j),
-                                                    date,
-                                                    date
+                                                    barcode.getString(barcode_position),
+                                                    date, date
                                             );
-                                        } catch ( Exception e ) {
+                                        } catch (Exception e){
                                             e.printStackTrace();
                                         }
-                                    }
-                                });
+                                    });
+                                }
+
+                                cart.add(new Product(
+                                        apple.getString("product_name"),
+                                        apple.getString("product_code"),
+                                        apple.getString("price"),
+                                        barcodeList
+                                ));
 
                             } catch (Exception e) {
                                 e.printStackTrace();
